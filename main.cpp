@@ -14,6 +14,8 @@ void practice2(GLFWwindow *window);
 
 void practice3(GLFWwindow *window);
 
+void practice4(GLFWwindow *window);
+
 
 void processInput(GLFWwindow *window);
 
@@ -23,17 +25,36 @@ const unsigned int SCR_HEIGHT = 600;
 
 const char *vertexShaderSource = "#version 330 core\n"
                                  "layout (location = 0) in vec3 aPos;\n"
+                                 "layout (location = 1) in vec3 aColor;\n"
+                                 "out vec3 ourColor;\n" //向片段着色器传入,判断着色器中的变量类型和名字必须一样
                                  "void main()\n"
                                  "{\n"
                                  "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+                                 "   ourColor = aColor;\n"
                                  "}\0";
+
+//const char *fragmentShaderSource = "#version 330 core\n"
+//                                   "out vec4 FragColor;\n"
+//                                   "uniform vec4 ourColor;\n" //uniform 由程序中传入值
+//                                   "void main()\n"
+//                                   "{\n"
+//                                   "   FragColor = ourColor;\n"
+//                                   "}\n\0";
 
 const char *fragmentShaderSource = "#version 330 core\n"
                                    "out vec4 FragColor;\n"
+                                   "in vec3 ourColor;\n" // in,接受由顶点着色器中传入的值
                                    "void main()\n"
                                    "{\n"
-                                   "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                   "   FragColor = vec4(ourColor,1.0);\n"
                                    "}\n\0";
+
+const char *fragmentShaderSource2 = "#version 330 core\n"
+                                    "out vec4 FragColor;\n"
+                                    "void main()\n"
+                                    "{\n"
+                                    "   FragColor = vec4(0.0f, 0.5f, 0.2f, 1.0f);\n"
+                                    "}\n\0";
 
 
 int loadShader(unsigned int shader, const char *shaderSource) {
@@ -71,12 +92,144 @@ int main() {
 
 //    practice1(window);
 //    practice2(window);
-    practice3(window);
+//    practice3(window);
+    practice4(window);
 
     glfwTerminate();
     return 0;
 }
 
+
+void practice4(GLFWwindow *window) {
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+    int success;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    char infoLog[512];
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
+        cout << "vertexShader error" << infoLog << endl;
+    }
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
+        cout << "fragmentShader error" << infoLog << endl;
+    }
+
+    GLuint fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader2, 1, &fragmentShaderSource2, nullptr);
+    glCompileShader(fragmentShader2);
+    glGetShaderiv(fragmentShader2, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader2, 512, nullptr, infoLog);
+        cout << "fragmentShader error" << infoLog << endl;
+    }
+
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, nullptr, infoLog);
+        cout << "program error" << infoLog << endl;
+    }
+
+    GLuint program2 = glCreateProgram();
+    glAttachShader(program2, vertexShader);
+    glAttachShader(program2, fragmentShader2);
+    glLinkProgram(program2);
+    glGetProgramiv(program2, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program2, 512, nullptr, infoLog);
+        cout << "program error" << infoLog << endl;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    glDeleteShader(fragmentShader2);
+
+    float vertices[] = {
+            // 位置       //颜色
+            -1, 1, 0,   1.0f, 0.0f, 0.0f,
+            -1, 0, 0,   0.0f, 1.0f, 0.0f,
+            0, 0, 0,    0.0f, 0.0f, 1.0f
+    };
+
+    float vertices1[] = {
+            1, 1, 0,
+            1, 0, 0,
+            0, 0, 0
+    };
+//    unsigned VBO, VAO, VBO1, VAO1;
+//    glGenVertexArrays(1, &VAO);
+//    glGenBuffers(1, &VBO);
+//    glGenVertexArrays(1, &VAO1);
+//    glGenBuffers(1, &VBO1);
+    unsigned int VBOS[2], VAOS[2];
+    glGenBuffers(2, VBOS);
+    glGenVertexArrays(2, VAOS);
+
+    glBindVertexArray(VAOS[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOS[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    // location=0
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          reinterpret_cast<const void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    glBindVertexArray(VAOS[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOS[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    while (!glfwWindowShouldClose(window)) {
+
+        processInput(window);
+        glClearColor(0.5f, 0.2f, 0.8f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(program);
+        glBindVertexArray(VAOS[0]);
+
+        //////////传入uniform标识的变量
+//        double time = glfwGetTime();
+//        double greenValue = sin(time) / 2.0f + 0.5f;
+//        double blueValue = cos(time) / 2.0f + 0.5f;
+//        GLint location = glGetUniformLocation(program, "ourColor");
+//        glUniform4f(location, 0.0f, greenValue, blueValue, 1.0f);
+        //////////传入uniform标识的变量
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glUseProgram(program2);
+        glBindVertexArray(VAOS[1]);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
+    glDeleteVertexArrays(2, VAOS);
+    glDeleteBuffers(2, VBOS);
+//    glDeleteVertexArrays(1, &VAO1);
+//    glDeleteBuffers(1, &VBO1);
+    glDeleteProgram(program);
+}
 
 void practice3(GLFWwindow *window) {
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
