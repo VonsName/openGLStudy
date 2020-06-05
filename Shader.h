@@ -10,8 +10,13 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <glm/glm.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace std;
+using namespace glm;
 
 class Shader {
 public:
@@ -28,6 +33,8 @@ public:
     void setFloat(const string &name, float value) const;
 
     void setVec2(const string &name, float *f2) const;
+
+    void setMat4(const string &name, mat4 data);
 };
 
 

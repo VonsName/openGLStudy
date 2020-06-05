@@ -10,5 +10,5 @@ uniform sampler2D texture2;
 void main()
 {
     rTexCoord = vec2(TexCoord.x,TexCoord.y );
-    FragColor = mix(texture(texture1,TexCoord) * vec4(ourColor,1.0),texture(texture2,rTexCoord),0.7);
+    FragColor =mix(texture(texture1,TexCoord) * vec4(ourColor,1.0f),texture(texture2,TexCoord),0.2f);
 }
